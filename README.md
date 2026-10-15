@@ -9,6 +9,15 @@ Ce dépôt fournit une application Flask minimale et son infrastructure Docker p
 
 ## 1. Démarrer l'application
 
+Définir les secrets avant de démarrer les conteneurs lorsque cela est possible. Ne jamais les committer dans Git :
+
+```bash
+export FLASK_SECRET_KEY="$(openssl rand -hex 32)"
+export NVD_API_KEY="votre_cle_nvd"
+```
+
+`FLASK_SECRET_KEY` est recommandé pour conserver la même clé entre les redémarrages. Si elle n'est pas définie, l'application génère une clé aléatoire au démarrage ; les commandes Docker comme `docker compose down` restent ainsi utilisables sans variable d'environnement.
+
 ```bash
 docker compose build
 docker compose up -d app
@@ -77,7 +86,21 @@ docker compose --profile scan run --rm dependency-check
 
 La dépendance `requests==2.19.1` est volontairement ancienne. Le service scanne directement `/src/requirements.txt` et active l'analyseur Python expérimental ; cela est nécessaire pour éviter un rapport indiquant `Dependencies Scanned: 0`. Vérifier dans le rapport les CVE associées et expliquer pourquoi une version corrigée doit être utilisée plutôt que de masquer le résultat.
 
-## 4. Démonstration attendue avant correction
+## 4. Corrections SAST appliquées
+
+- La protection CSRF est activée globalement avec `Flask-WTF` et une clé secrète fournie par `FLASK_SECRET_KEY`.
+- La base SQLite n'est plus créée dans `/tmp` ; elle est stockée dans `/data` dans le conteneur, ou dans `data/` en exécution locale.
+- L'application utilise `127.0.0.1` par défaut. Le service Docker fournit explicitement `HOST=0.0.0.0` afin que le port publié soit accessible depuis l'hôte ; cette exception est limitée au déploiement conteneurisé.
+
+Reconstruire après modification :
+
+```bash
+docker compose down
+docker compose build --no-cache app
+docker compose up -d app
+```
+
+## 5. Démonstration attendue avant correction
 
 1. Montrer l'état initial du dépôt et les versions de `requirements.txt`.
 2. Démarrer l'application et présenter les endpoints.

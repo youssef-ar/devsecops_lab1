@@ -6,6 +6,8 @@ services:
       - "5000:5000"
     environment:
       DATABASE_PATH: /data/app.db
+      FLASK_SECRET_KEY: ${FLASK_SECRET_KEY:-}
+      HOST: 0.0.0.0
     volumes:
       - app-data:/data
     restart: unless-stopped
@@ -40,7 +42,7 @@ services:
       - .:/src
       - dependency-check-data:/usr/share/dependency-check/data
     environment:
-      NVD_API_KEY: ${NVD_API_KEY:?Set NVD_API_KEY before running Dependency-Check}
+      NVD_API_KEY: ${NVD_API_KEY:-}
     command:
       - --project
       - devsecops-tp1
@@ -52,7 +54,7 @@ services:
       - --out
       - /src/reports/dependency-check
       - --nvdApiKey
-      - ${NVD_API_KEY:?Set NVD_API_KEY before running Dependency-Check}
+      - ${NVD_API_KEY:-}
 
 volumes:
   app-data:

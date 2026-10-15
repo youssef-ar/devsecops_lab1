@@ -13,6 +13,7 @@ COPY app.py .
 # Run as a non-root user in the application container.
 RUN useradd --create-home --uid 10001 appuser \
     && mkdir -p /data \
+    && mkdir -p /app/data \
     && chown -R appuser:appuser /app /data
 USER appuser
 

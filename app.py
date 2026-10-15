@@ -1,16 +1,21 @@
 from flask import Flask, request, render_template_string
+from flask_wtf.csrf import CSRFProtect
 import os
+import secrets
 import sqlite3
 import subprocess
 
 app = Flask(__name__)
+app.config["SECRET_KEY"] = os.getenv("FLASK_SECRET_KEY") or secrets.token_hex(32)
+CSRFProtect(app)
 
 # Intentionally insecure for TP 1: this secret must be detected by SAST.
 DATABASE_PASSWORD = "dev-password-123"
-DATABASE = os.getenv("DATABASE_PATH", "/tmp/app.db")
+DATABASE = os.getenv("DATABASE_PATH", os.path.join(os.path.dirname(__file__), "data", "app.db"))
 
 
 def init_db():
+    os.makedirs(os.path.dirname(DATABASE), exist_ok=True)
     connection = sqlite3.connect(DATABASE)
     connection.execute("CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY, name TEXT)")
     connection.executemany(
@@ -55,4 +60,4 @@ def diagnostics():
 
 if __name__ == "__main__":
     init_db()
-    app.run(host="0.0.0.0", port=5000, debug=False)
+    app.run(host=os.getenv("HOST", "127.0.0.1"), port=5000, debug=False)

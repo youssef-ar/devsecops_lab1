@@ -1,5 +1,6 @@
 # Deliberately outdated versions for the SCA exercise.
 Flask==2.2.2
+Flask-WTF==1.1.1
 Werkzeug==2.2.2
 requests==2.19.1
 Django==3.2.0
