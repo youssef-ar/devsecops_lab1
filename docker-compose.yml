@@ -1,0 +1,62 @@
+services:
+  app:
+    build:
+      context: .
+    ports:
+      - "5000:5000"
+    environment:
+      DATABASE_PATH: /data/app.db
+    volumes:
+      - app-data:/data
+    restart: unless-stopped
+
+  sonarqube:
+    image: sonarqube:community
+    profiles: ["scan"]
+    ports:
+      - "9000:9000"
+    volumes:
+      - sonarqube-data:/opt/sonarqube/data
+      - sonarqube-extensions:/opt/sonarqube/extensions
+      - sonarqube-logs:/opt/sonarqube/logs
+
+  sonar-scanner:
+    image: sonarsource/sonar-scanner-cli:latest
+    profiles: ["scan"]
+    depends_on:
+      - sonarqube
+    working_dir: /usr/src
+    volumes:
+      - .:/usr/src
+    environment:
+      SONAR_HOST_URL: http://sonarqube:9000
+      SONAR_TOKEN: ${SONAR_TOKEN:-}
+    command: ["-Dsonar.projectKey=devsecops-tp1", "-Dsonar.sources=.", "-Dsonar.python.version=3.12", "-Dsonar.host.url=http://sonarqube:9000", "-Dsonar.token=${SONAR_TOKEN:-}"]
+
+  dependency-check:
+    image: owasp/dependency-check:latest
+    profiles: ["scan"]
+    volumes:
+      - .:/src
+      - dependency-check-data:/usr/share/dependency-check/data
+    environment:
+      NVD_API_KEY: ${NVD_API_KEY:?Set NVD_API_KEY before running Dependency-Check}
+    command:
+      - --project
+      - devsecops-tp1
+      - --scan
+      - /src/requirements.txt
+      - --enableExperimental
+      - --format
+      - ALL
+      - --out
+      - /src/reports/dependency-check
+      - --nvdApiKey
+      - ${NVD_API_KEY:?Set NVD_API_KEY before running Dependency-Check}
+
+volumes:
+  app-data:
+  dependency-check-data:
+  sonarqube-data:
+  sonarqube-extensions:
+  sonarqube-logs:
